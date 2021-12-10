@@ -8,7 +8,8 @@ Welcome to PostAPI
 
 ### NewsAPI live on Heroku
 
-* Visit [NewsAPIProject](https://news-api-post.herokuapp.com/)
+* Visit [NewsAPIProject Swagger](https://news-api-post.herokuapp.com/swagger/) version
+* Visit [NewsAPIProject Redoc](https://news-api-post.herokuapp.com/redoc/) version
 
 ### Dependencies
 
