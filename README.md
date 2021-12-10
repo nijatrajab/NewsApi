@@ -6,6 +6,10 @@ Welcome to PostAPI
 
 ## Getting Started
 
+### NewsAPI live on Heroku
+
+* Visit [NewsAPIProject](https://news-api-post.herokuapp.com/)
+
 ### Dependencies
 
 * [Docker](https://www.docker.com/get-started)
@@ -39,4 +43,4 @@ docker-compose run news_app sh -c "python manage.py test && flake8"
 
 ## Postman
 
-* Check out [Postman docs](https://go.postman.co/workspace/My-Workspace~8f1b1281-bc7b-42e4-80d9-c75507892478/collection/12709471-351fefec-dc17-4ac6-a28c-bc1a3193d96c)
+* Check out [Postman docs](https://www.postman.com/nijatrajab/workspace/newsapi/collection/12709471-351fefec-dc17-4ac6-a28c-bc1a3193d96c)
