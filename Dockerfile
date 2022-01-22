@@ -14,9 +14,6 @@ RUN mkdir /news_app
 WORKDIR /news_app
 COPY ./news_app /news_app
 
-RUN mkdir -p /vol/web/media
-RUN mkdir -p /vol/web/static
-RUN adduser -D user
-RUN chown -R user:user /vol/
-RUN chmod -R 755 /vol/web
+RUN adduser -D --no-create-home user
+
 USER user

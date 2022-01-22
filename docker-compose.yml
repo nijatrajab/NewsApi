@@ -4,7 +4,7 @@ services:
   redis:
     image: redis:6-alpine
     environment:
-      - REDIS_HOST=redis
+      - REDIS_URL=${REDIS_URL}
     ports:
       - "6379:6379"
     command: >
@@ -22,12 +22,15 @@ services:
              python manage.py makemigrations user &&
              python manage.py makemigrations core &&
              python manage.py migrate &&
-             gunicorn news_app.wsgi:application --bind 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:8000"
     environment:
-      - DB_HOST=db
-      - DB_NAME=news_app
-      - DB_USER=testadmin
-      - DB_PASS=testpassword
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - REDIS_URL=${REDIS_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     depends_on:
       - db
 
@@ -35,9 +38,9 @@ services:
     container_name: pg_post_app_api
     image: postgres:13-alpine
     environment:
-      - POSTGRES_DB=news_app
-      - POSTGRES_USER=testadmin
-      - POSTGRES_PASSWORD=testpassword
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
 
@@ -46,8 +49,8 @@ services:
     image: dpage/pgadmin4
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: test@admin.com
-      PGADMIN_DEFAULT_PASSWORD: testpass
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
 
@@ -58,11 +61,15 @@ services:
       sh -c "celery -A news_app worker --beat --scheduler django --loglevel=info"
     volumes:
       - ./news_app:/news_app
+      - ./static:/static
     environment:
-      - DB_HOST=db
-      - DB_NAME=news_app
-      - DB_USER=testadmin
-      - DB_PASS=testpassword
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - REDIS_URL=${REDIS_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     depends_on:
       - redis
       - news_app

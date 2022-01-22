@@ -10,26 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
 import os
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from pathlib import Path
+from decouple import config
 from celery.schedules import crontab
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-us$6ch&&ui&0noj!#p(=&0-gmrsq=0o)6(8$=_mn5g8xfoeh^&"
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(config('DEBUG')))
 
-ALLOWED_HOSTS = []
-
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = ['news-api-post.herokuapp.com', '127.0.0.1:8000']
 
 # Application definition
 
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    'drf_yasg',
     "django_celery_beat",
     "django_celery_results",
     "user",
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -130,10 +133,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = "/static/"
-MEDIA_URL = "/media/"
-
-MEDIA_ROOT = "/vol/web/media"
-STATIC_ROOT = "/vol/web/static"
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "staticfiles")]
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 AUTH_USER_MODEL = "user.User"
 BASE_URL = "127.0.0.1:8000"
@@ -143,9 +146,22 @@ BASE_URL = "127.0.0.1:8000"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REDIS_HOST = os.environ.get("REDIS_HOST", "127.0.0.1")
+REDIS_URL = config("REDIS_URL")
 
-CELERY_BROKER_URL = "redis://redis:6379"
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "ssl_cert_reqs": None
+            },
+        }
+    }
+}
+
+CELERY_BROKER_URL = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
@@ -156,4 +172,38 @@ CELERY_BEAT_SCHEDULE = {
         "task": "core.tasks.reset_upvote",
         "schedule": crontab(minute=0, hour=0),
     }
+}
+
+
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
+
+SCHEMA_VIEW = get_schema_view(
+        openapi.Info(
+            title="News API",
+            default_version='v1',
+            description="Authenticated users can view all news and comments, also upvote news (upvotes reset every day), "
+                        "publish news and post a comment. Take a look at README on the Github repository for usage information.",
+            contact=openapi.Contact(name="Github", url='https://github.com/nijatrajab/NewsApi.git'),
+            license=openapi.License(name="MIT License"),
+        ),
+        public=True,
+        permission_classes=[permissions.AllowAny],
+    )
+
+SWAGGER_SETTINGS = {
+    'LOGIN_URL': '/admin/login',
+    'USE_SESSION_AUTH': True,
+    'SECURITY_DEFINITIONS': {
+        'Token': {'type': 'apiKey', 'name': 'Authorization', 'in': 'header'},
+    },
+    'JSON_EDITOR': True,
+    'SHOW_REQUEST_HEADERS': True,
+    'OPERATIONS_SORTER': 'alpha',
+    'PERSIST_AUTH': True,
+}
+
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
 }

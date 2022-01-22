@@ -1,0 +1,2 @@
+web: bash -c "cd news_app && python3 manage.py collectstatic --noinput && python manage.py migrate && gunicorn --bind :$PORT news_app.wsgi:application"
+worker: celery -A news_app worker --beat --scheduler django_celery_beat.schedulers:DatabaseScheduler
