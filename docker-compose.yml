@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   redis:
+    container_name: news_app_redis
     image: redis:6-alpine
     environment:
       - REDIS_URL=${REDIS_URL}
@@ -11,6 +12,7 @@ services:
       sh -c "redis-server"
 
   news_app:
+    container_name: news_app
     build:
       context: .
     ports:
@@ -33,9 +35,10 @@ services:
       - DB_PASS=${DB_PASS}
     depends_on:
       - db
+      - redis
 
   db:
-    container_name: pg_post_app_api
+    container_name: news_app_pg
     image: postgres:13-alpine
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
@@ -45,7 +48,7 @@ services:
       - "5432:5432"
 
   pgadmin:
-    container_name: pgadmin4_post_app_api
+    container_name: news_app_pgadmin
     image: dpage/pgadmin4
     restart: always
     environment:
@@ -55,6 +58,7 @@ services:
       - "5050:80"
 
   celery:
+    container_name: news_app_celery
     build:
       context: .
     command: >
@@ -71,6 +75,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
     depends_on:
-      - redis
       - news_app
+      - redis
+      - db
 
